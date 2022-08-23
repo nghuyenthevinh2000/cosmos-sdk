@@ -118,8 +118,11 @@ func (s *IntegrationTestSuite) TestQueryBySig() {
 	txb := s.mkTxBuilder()
 	txbz, err := s.cfg.TxConfig.TxEncoder()(txb.GetTx())
 	s.Require().NoError(err)
-	_, err = s.queryClient.BroadcastTx(context.Background(), &tx.BroadcastTxRequest{TxBytes: txbz, Mode: tx.BroadcastMode_BROADCAST_MODE_SYNC})
+	resp, err := s.queryClient.BroadcastTx(context.Background(), &tx.BroadcastTxRequest{TxBytes: txbz, Mode: tx.BroadcastMode_BROADCAST_MODE_SYNC})
 	s.Require().NoError(err)
+	s.Require().NotEmpty(resp.TxResponse.TxHash)
+
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// wait for tx to be included
 	s.network.WaitForNextBlock()
