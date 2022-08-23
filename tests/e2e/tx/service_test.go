@@ -118,8 +118,11 @@ func (s *IntegrationTestSuite) TestQueryBySig() {
 	txb := s.mkTxBuilder()
 	txbz, err := s.cfg.TxConfig.TxEncoder()(txb.GetTx())
 	s.Require().NoError(err)
-	_, err = s.queryClient.BroadcastTx(context.Background(), &tx.BroadcastTxRequest{TxBytes: txbz, Mode: tx.BroadcastMode_BROADCAST_MODE_BLOCK})
+	_, err = s.queryClient.BroadcastTx(context.Background(), &tx.BroadcastTxRequest{TxBytes: txbz, Mode: tx.BroadcastMode_BROADCAST_MODE_SYNC})
 	s.Require().NoError(err)
+
+	// wait for tx to be included
+	s.network.WaitForNextBlock()
 
 	// get the signature out of the builder
 	sigs, err := txb.GetTx().GetSignaturesV2()
@@ -516,9 +519,7 @@ func (s IntegrationTestSuite) TestBroadcastTx_GRPC() {
 	}{
 		{"nil request", nil, true, "request cannot be nil"},
 		{"empty request", &tx.BroadcastTxRequest{}, true, "invalid empty tx"},
-		{"no mode", &tx.BroadcastTxRequest{
-			TxBytes: txBytes,
-		}, true, "supported types: sync, async, block"},
+		{"no mode", &tx.BroadcastTxRequest{TxBytes: txBytes}, true, "supported types: sync, async"},
 		{"valid request", &tx.BroadcastTxRequest{
 			Mode:    tx.BroadcastMode_BROADCAST_MODE_SYNC,
 			TxBytes: txBytes,
@@ -555,7 +556,7 @@ func (s IntegrationTestSuite) TestBroadcastTx_GRPCGateway() {
 		expErrMsg string
 	}{
 		{"empty request", &tx.BroadcastTxRequest{}, true, "invalid empty tx"},
-		{"no mode", &tx.BroadcastTxRequest{TxBytes: txBytes}, true, "supported types: sync, async, block"},
+		{"no mode", &tx.BroadcastTxRequest{TxBytes: txBytes}, true, "supported types: sync, async"},
 		{"valid request", &tx.BroadcastTxRequest{
 			Mode:    tx.BroadcastMode_BROADCAST_MODE_SYNC,
 			TxBytes: txBytes,
