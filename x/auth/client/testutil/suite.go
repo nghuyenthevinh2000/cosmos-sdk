@@ -1551,8 +1551,9 @@ func (s *IntegrationTestSuite) TestSignWithMultiSignersAminoJSON() {
 		signedTxFile.Name(),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 	)
-
 	require.NoError(err)
+	require.NoError(s.network.WaitForNextBlock())
+
 	var txRes sdk.TxResponse
 	require.NoError(val0.ClientCtx.Codec.UnmarshalJSON(res.Bytes(), &txRes))
 	require.Equal(uint32(0), txRes.Code, txRes.RawLog)
@@ -1566,10 +1567,7 @@ func (s *IntegrationTestSuite) TestSignWithMultiSignersAminoJSON() {
 	require.Equal(sdk.NewCoins(val0Coin, val1Coin), queryRes.Balances)
 }
 
-// TODO to re-enable in #12274
 func (s *IntegrationTestSuite) TestAuxSigner() {
-	s.T().Skip()
-
 	require := s.Require()
 	val := s.network.Validators[0]
 	val0Coin := sdk.NewCoin(fmt.Sprintf("%stoken", val.Moniker), sdk.NewInt(10))
